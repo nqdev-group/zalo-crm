@@ -1,7 +1,8 @@
 {
-  "name": "frontend",
+  "name": "zcrm-frontend",
   "private": true,
   "version": "3.4.0",
+  "description": "Zalo Sales CRM Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -8,6 +8,10 @@
  * The process never exits — all errors are caught and logged.
  */
 
+// Load .env first — unlike `prisma migrate`/`generate` (which read prisma.config.ts),
+// a bare `tsx watch src/app.ts` never loads .env on its own.
+import 'dotenv/config';
+
 // BigInt → string khi JSON.stringify (Fastify response serializer).
 // Cần thiết cho Message.zaloMsgIdNum (Prisma trả BigInt, JSON native fail without this).
 (BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function () {

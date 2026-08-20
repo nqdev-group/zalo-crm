@@ -11,6 +11,9 @@
     },
     "test": {
       "outputs": []
+    },
+    "db:seed": {
+      "cache": false
     }
   }
 }

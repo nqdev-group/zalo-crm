@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "db:seed": "turbo run db:seed"
   },
   "devDependencies": {
     "turbo": "^2.5.0"
