@@ -1,10 +1,10 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
     "files.exclude": {
       "**/.git": true,
       "**/.svn": true,
@@ -17,7 +17,25 @@
       "**/build": true,
       "**/coverage": true,
       "**/.yarn": true,
-      "**/.vscode": true
+      "**/.vscode": true,
+      "**/.idea": true,
+      "**/.cache": true,
+      "**/.next": true,
+      "**/.nuxt": true,
+      "**/.parcel-cache": true,
+      "**/.expo": true,
+      "**/.serverless": true,
+      "**/.firebase": true,
+      "**/.vercel": true,
+      "**/.output": true,
+      "**/archived": true,
+      "**/*.md": true,
+      "**/*.log": true,
+      "**/*.env": true,
+      "**/*.lock": true,
+      "**/NOTICE": true,
+      "**/LICENSE": true,
+      "**/DCO": true
     }
   }
 }
