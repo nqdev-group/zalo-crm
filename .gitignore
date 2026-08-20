@@ -26,19 +26,16 @@ TODO.local.md
 backend/static/
 
 # Dev/AI tooling + artifacts (không commit) — 2026-06-05
-.claude/
 .understand-anything/
 screenshots/
 inspect-log.mjs
 inspect-*.mjs
 /plans/
-AGENTS.md
 TODOS.md
 frontend/public/mockups/
 
 # Dev tools tự gắn (Anh)
 frontend/.capture-submit.js
-CLAUDE.md
 _chat_ui_backups/
 
 # Firebase service account & secrets (KHÔNG commit)

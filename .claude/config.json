@@ -1,0 +1,20 @@
+{
+  "project": "zcrm",
+  "description": "Self-hosted CRM for sales teams working over Zalo. Fastify 5 + Prisma 7 + PostgreSQL backend, Vue 3 + Vuetify 4 SPA frontend, Docker Compose deployment. Open-core (AGPL-3.0 + commercial dual-license).",
+  "stack": {
+    "backend": ["node", "typescript", "fastify", "prisma", "postgresql", "redis", "bullmq", "socket.io"],
+    "frontend": ["vue3", "typescript", "vuetify", "pinia", "vite", "vue-router"],
+    "deployment": ["docker-compose", "minio", "clamav"]
+  },
+  "monorepo": {
+    "workspaces": false,
+    "note": "backend/ and frontend/ are independent npm projects, not a workspace. Root .yarnrc.yml is vestigial."
+  },
+  "ci": {
+    "present": false
+  },
+  "guidance": {
+    "root": "CLAUDE.md",
+    "scopeMap": "AGENTS.md"
+  }
+}

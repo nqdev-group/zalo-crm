@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
+
+# Build output
+backend/dist/
+frontend/dist/
+.turbo/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Logs / coverage
+*.log
+coverage/
+backend/coverage/
+frontend/coverage/
+
+# Prisma generated client
+backend/prisma/generated/
+backend/node_modules/.prisma/
+
+# Docker volumes (bind-mounted local data, not source)
+docker/data/
+
+# Large binary/rendered docs (source .mmd/.excalidraw stay readable)
+docs/**/*.png
+docs/**/*.pdf
+docs/release-images/**
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
