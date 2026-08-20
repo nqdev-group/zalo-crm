@@ -5,6 +5,7 @@ dist/
 backups/
 .DS_Store
 .gstack/
+.turbo/
 
 # Local dev artifacts — không commit
 .backfill*.sql

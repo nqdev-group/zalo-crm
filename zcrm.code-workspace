@@ -31,7 +31,6 @@
       "**/archived": true,
       "**/*.md": true,
       "**/*.log": true,
-      "**/*.env": true,
       "**/*.lock": true,
       "**/NOTICE": true,
       "**/LICENSE": true,

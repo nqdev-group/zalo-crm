@@ -18,7 +18,7 @@ docs/       Business/technical reference docs, architecture diagrams, API docs
 assets/     Brand assets (logos) and marketing collateral
 ```
 
-There is **no root `package.json`** and no npm/yarn workspaces — `backend/` and `frontend/` are built and versioned independently. A `.yarnrc.yml` + near-empty `yarn.lock` exist at root but are vestigial: nothing in the Dockerfile, compose files, or install scripts invokes yarn. All builds use `npm ci`/`npm install`. Don't assume workspace-style cross-package imports work.
+The root `package.json` + `turbo.json` (npm workspaces over `backend/` and `frontend/`) exist **only to orchestrate local dev** (`npm run dev` fans out to both dev servers via Turborepo). They don't change how each package is built or versioned — `backend/` and `frontend/` remain independent npm projects with their own `package-lock.json`, and neither imports the other. Production/Docker builds still run `npm ci`/`npm install` scoped to each package folder (see `docker/Dockerfile`), untouched by the root workspace — Docker's `COPY backend/package.json backend/package-lock.json` never sees the root `package.json`. Don't assume workspace-style cross-package imports work; the workspace exists for task-running, not code sharing. A `.yarnrc.yml` + near-empty `yarn.lock` also exist at root but are vestigial: nothing invokes yarn — the root workspace uses npm.
 
 There is **no CI/CD** (`.github/workflows/` does not exist). Don't reference CI checks that don't run; if you add tests, they're verified locally (`npm test` in each project) until a workflow is actually added.
 
