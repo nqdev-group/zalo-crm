@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZCRM — Diagram Viewer</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1420; --panel: #161d2e; --panel2: #1c2438; --border: #2a3350;
+    --text: #e6e9f2; --muted: #97a1bd; --accent: #5b8dff; --accent2: #34d399;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+  #sidebar { width: 260px; background: var(--panel); border-right: 1px solid var(--border); padding: 16px; overflow-y: auto; flex-shrink: 0; }
+  #sidebar h1 { font-size: 15px; margin: 0 0 4px; }
+  #sidebar .sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .nav-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 6px; font-size: 13px; color: var(--muted); border: 1px solid transparent; transition: all .15s; }
+  .nav-item:hover { background: var(--panel2); color: var(--text); }
+  .nav-item.active { background: rgba(91,141,255,.15); border-color: var(--accent); color: var(--text); }
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #toolbar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--panel); }
+  #toolbar h2 { font-size: 16px; margin: 0; }
+  #toolbar .actions button { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-left: 8px; }
+  #toolbar .actions button:hover { border-color: var(--accent); color: var(--accent); }
+  #canvas-wrap { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 30px; background: radial-gradient(circle at 50% 0%, #131a2b, #0f1420); }
+  #diagram { background: #fff; border-radius: 12px; padding: 24px; transform-origin: top center; transition: transform .15s; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+  .zoom-controls { display: flex; align-items: center; gap: 6px; }
+  .zoom-controls button { width: 28px; height: 28px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <h1>ZCRM Diagrams</h1>
+  <div class="sub">Phase 5 · docs/diagrams/</div>
+  <div id="nav"></div>
+</div>
+<div id="main">
+  <div id="toolbar">
+    <h2 id="title">Architecture</h2>
+    <div class="actions">
+      <span class="zoom-controls">
+        <button onclick="zoom(-0.1)">−</button>
+        <span id="zoomLabel" style="font-size:12px;color:var(--muted);width:44px;text-align:center;display:inline-block;">100%</span>
+        <button onclick="zoom(0.1)">+</button>
+      </span>
+      <button onclick="copySource()">Copy .mermaid</button>
+      <button onclick="downloadSvg()">Download SVG</button>
+    </div>
+  </div>
+  <div id="canvas-wrap"><div id="diagram">Loading…</div></div>
+</div>
+
+<script type="text/plain" id="d-architecture">
+graph TB
+    subgraph Client["Client Layer"]
+        SPA["Vue 3 SPA<br/>51 views, Vuetify 4, Pinia"]
+    end
+    subgraph Backend["Backend (Fastify 5, Node 20 ESM)"]
+        APP["app.ts boot sequence<br/>plugins -> socket auth -> routes -> cron/queue"]
+        MOD["25 business modules<br/>auth, rbac, zalo, chat, contacts, scoring, ..."]
+        POOL["ZaloAccountPool<br/>in-memory, epoch-tagged reconnect"]
+    end
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL 16<br/>108 Prisma models")]
+        REDIS[("Redis 7<br/>BullMQ + rate-limit counters")]
+        STORE[("MinIO / S3 / R2<br/>attachments + media")]
+    end
+    subgraph External["External Systems"]
+        ZALO["Zalo servers<br/>via zca-js (unofficial)"]
+        TG["Telegram Bot API<br/>optional bridge"]
+        AI["AI Providers<br/>Anthropic / Gemini / OpenAI-compat"]
+        WEBHOOK["Org webhooks / Zapier / Google Sheets"]
+    end
+    SPA -- "REST /api/v1 (JWT)" --> APP
+    SPA -- "Socket.IO (JWT handshake)" --> APP
+    APP --> MOD
+    MOD --> POOL
+    MOD -- "Prisma ORM, tenant-guarded" --> PG
+    MOD -- "BullMQ + counters" --> REDIS
+    MOD -- "upload/fetch" --> STORE
+    POOL -- "zca-js session" --> ZALO
+    MOD -- "bridgeBus" --> TG
+    MOD -- "per-org provider config" --> AI
+    MOD -- "SSRF-guarded POST" --> WEBHOOK
+    classDef external fill:#f8d7da,stroke:#c0392b
+    classDef data fill:#d4edda,stroke:#27ae60
+    classDef backend fill:#d6eaf8,stroke:#2980b9
+    class ZALO,TG,AI,WEBHOOK external
+    class PG,REDIS,STORE data
+    class APP,MOD,POOL backend
+</script>
+
+<script type="text/plain" id="d-queue">
+graph LR
+    subgraph Producer["Producer"]
+        ROUTE["group-scan-routes.ts<br/>POST /zalo-accounts/:id/group-scan"]
+    end
+    subgraph Broker["Redis 7 (BullMQ)"]
+        Q["Queue: group-scan<br/>job id = gs-&lt;scanId&gt; (dedup)"]
+    end
+    subgraph Consumer["Worker (concurrency = 1)"]
+        W["group-scan-worker.ts<br/>processGroupScan(scanId)"]
+        STATE["State machine<br/>queued -> running -> completed | partial | failed"]
+        CHUNK["Chunked processing<br/>50 members/batch, resumable via resumeCursor"]
+    end
+    subgraph Outcome["Outcome"]
+        OK["removeOnComplete<br/>age 24h, keep last 1000"]
+        FAIL["removeOnFail<br/>retained 7 days for audit<br/>(no formal DLQ)"]
+        RETRY["Retry: attempts=3<br/>backoff exponential, 10s base"]
+    end
+    ROUTE -- "enqueueGroupScan(scanId)" --> Q
+    Q -- "BRPOPLPUSH (dedicated ioredis conn)" --> W
+    W --> STATE
+    STATE --> CHUNK
+    CHUNK -- "success" --> OK
+    CHUNK -- "throws" --> RETRY
+    RETRY -- "3rd failure" --> FAIL
+    classDef producer fill:#d6eaf8,stroke:#2980b9
+    classDef broker fill:#fcf3cf,stroke:#b7950b
+    classDef consumer fill:#d4edda,stroke:#27ae60
+    classDef outcome fill:#f8d7da,stroke:#c0392b
+    class ROUTE producer
+    class Q broker
+    class W,STATE,CHUNK consumer
+    class OK,FAIL,RETRY outcome
+</script>
+
+<script type="text/plain" id="d-workflow">
+graph TD
+    START(["Customer messages a connected Zalo nick"]) --> LISTEN["zca-js listener fires<br/>(zalo-listener-factory.ts)"]
+    LISTEN --> RESOLVE{"Contact/Friend exists<br/>for this UID?"}
+    RESOLVE -- "no" --> CREATE["Create Friend<br/>(+ Contact if new person)"]
+    RESOLVE -- "yes" --> UPDATE["Update Friend preview,<br/>relationshipKind"]
+    CREATE --> MSG["Persist Message + Conversation"]
+    UPDATE --> MSG
+    MSG --> EMIT["Socket.IO emit<br/>scoped to org:&lt;orgId&gt; room"]
+    EMIT --> UI["Frontend use-chat.ts<br/>patches reactive state"]
+    MSG --> SIGNAL["Scoring signal recorded<br/>(inbound message)"]
+    SIGNAL --> SCORE["Friend.leadScore recalculated<br/>4-axis: Engagement/Intent/Fit/Velocity"]
+    SCORE --> AGG["Contact.leadScore = MAX(Friend scores)<br/>on next aggregate pass"]
+    MSG --> BRIDGE{"Telegram bridge<br/>configured for this nick?"}
+    BRIDGE -- "yes" --> MIRROR["Mirror to Telegram topic<br/>(media re-uploaded as bytes)"]
+    BRIDGE -- "no" --> SKIP(["done"])
+    MIRROR --> SKIP
+    classDef decision fill:#fcf3cf,stroke:#b7950b
+    classDef action fill:#d6eaf8,stroke:#2980b9
+    classDef terminal fill:#d4edda,stroke:#27ae60
+    class RESOLVE,BRIDGE decision
+    class LISTEN,CREATE,UPDATE,MSG,EMIT,UI,SIGNAL,SCORE,AGG,MIRROR action
+    class START,SKIP terminal
+</script>
+
+<script type="text/plain" id="d-component">
+graph TB
+    subgraph FE["Frontend components"]
+        VIEWS["Views (51)"]
+        COMPOSABLES["Composables (40+ use-*.ts)"]
+        STORES["Pinia stores: auth, rbac, privacy"]
+        APIL["api/index.ts (shared axios)<br/>+ media.ts, public-branding.ts, socket.ts"]
+    end
+    subgraph BE["Backend components"]
+        ROUTES["Route modules (25)"]
+        SVC["Service layer"]
+        TENANT["tenant-context.ts / tenant-guard.ts"]
+        EEREG["ee-registry/* (no-op hook defaults)"]
+        PRISMA["Prisma client<br/>4-layer $extends chain"]
+    end
+    subgraph EE_ABSENT["EE bundle (absent in this checkout)"]
+        EEMOD["_ee/automation, _ee/lead-pool, _ee/facebook<br/>(schema present, logic absent)"]
+    end
+    VIEWS --> COMPOSABLES
+    COMPOSABLES --> STORES
+    COMPOSABLES --> APIL
+    APIL -- "REST + Socket.IO" --> ROUTES
+    ROUTES --> SVC
+    SVC --> TENANT
+    TENANT --> PRISMA
+    SVC -.->|"hook call, no-op if absent"| EEREG
+    EEREG -.->|"would be overridden by"| EEMOD
+    classDef fe fill:#d6eaf8,stroke:#2980b9
+    classDef be fill:#d4edda,stroke:#27ae60
+    classDef absent fill:#f2f2f2,stroke:#999,stroke-dasharray: 5 5
+    class VIEWS,COMPOSABLES,STORES,APIL fe
+    class ROUTES,SVC,TENANT,EEREG,PRISMA be
+    class EEMOD absent
+</script>
+
+<script type="text/plain" id="d-sequence">
+sequenceDiagram
+    participant U as User (browser)
+    participant FE as Vue SPA
+    participant API as Fastify /api/v1
+    participant TC as tenant-context (ALS)
+    participant DB as PostgreSQL (Prisma)
+    participant RT as Socket.IO
+    U->>FE: Log in (email/phone + password)
+    FE->>API: POST /auth/login
+    API->>DB: bcrypt compare, resolve orgId
+    API-->>FE: access JWT (15m) + refresh token (rotating)
+    FE->>RT: connect (auth: {token})
+    RT->>RT: verify JWT at handshake, join org:<orgId> room
+    Note over FE,API: 15 minutes later - access token expires
+    FE->>API: Any request with expired JWT
+    API-->>FE: 401
+    FE->>API: POST /auth/refresh (single-flight, cross-tab locked)
+    API->>DB: rotate refresh token, detect reuse if any
+    API-->>FE: new access JWT + new refresh token
+    FE->>API: Retry original request (once)
+    Note over RT: Socket also disconnects on expiry
+    RT-->>FE: disconnect (reason: io server disconnect)
+    FE->>FE: healAuth() awaits same single-flight refresh
+    FE->>RT: reconnect with fresh token
+    RT-->>FE: onReconnect(downMs) - composable refetches missed data
+    API->>TC: enterTenantContext({orgId, userId, role})
+    API->>DB: query via Prisma (tenant-guard checks org-scoped models)
+    DB-->>API: rows
+    API-->>FE: JSON response
+</script>
+
+<script>
+mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+
+const DIAGRAMS = [
+  { id: 'architecture', title: 'System Architecture', src: 'd-architecture' },
+  { id: 'queue',        title: 'Queue Flow (group-scan)', src: 'd-queue' },
+  { id: 'workflow',     title: 'Message → Score → Bridge Workflow', src: 'd-workflow' },
+  { id: 'component',    title: 'Component Map (FE/BE/EE seam)', src: 'd-component' },
+  { id: 'sequence',     title: 'Auth Refresh Sequence', src: 'd-sequence' },
+];
+
+let current = DIAGRAMS[0];
+let zoomLevel = 1;
+
+function renderNav() {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  DIAGRAMS.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'nav-item' + (d.id === current.id ? ' active' : '');
+    el.textContent = d.title;
+    el.onclick = () => { current = d; zoomLevel = 1; render(); };
+    nav.appendChild(el);
+  });
+}
+
+async function render() {
+  renderNav();
+  document.getElementById('title').textContent = current.title;
+  const src = document.getElementById(current.src).textContent.trim();
+  const container = document.getElementById('diagram');
+  container.style.transform = 'scale(1)';
+  zoomLevel = 1;
+  document.getElementById('zoomLabel').textContent = '100%';
+  try {
+    const { svg } = await mermaid.render('mermaid-svg-' + current.id, src);
+    container.innerHTML = svg;
+  } catch (e) {
+    container.innerHTML = '<pre style="color:#c0392b">Render error: ' + e.message + '</pre>';
+  }
+}
+
+function zoom(delta) {
+  zoomLevel = Math.max(0.3, Math.min(3, zoomLevel + delta));
+  document.getElementById('diagram').style.transform = 'scale(' + zoomLevel + ')';
+  document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
+}
+
+function copySource() {
+  const src = document.getElementById(current.src).textContent.trim();
+  navigator.clipboard.writeText(src).then(() => alert('Mermaid source copied to clipboard.'));
+}
+
+function downloadSvg() {
+  const svgEl = document.querySelector('#diagram svg');
+  if (!svgEl) return;
+  const blob = new Blob([svgEl.outerHTML], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = current.id + '.svg';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
+</content>

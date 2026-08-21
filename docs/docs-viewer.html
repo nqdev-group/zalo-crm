@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZCRM — Documentation Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg:#0f1420; --panel:#161d2e; --panel2:#1c2438; --border:#2a3350;
+    --text:#e6e9f2; --muted:#97a1bd; --accent:#5b8dff; --accent2:#34d399;
+    --code-bg:#0d1220;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); display:flex; height:100vh; overflow:hidden; }
+  #sidebar { width:280px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+  #sidebar-header { padding:18px 16px 12px; border-bottom:1px solid var(--border); }
+  #sidebar-header h1 { font-size:16px; margin:0 0 2px; }
+  #sidebar-header .sub { font-size:11px; color:var(--muted); }
+  #search { margin:12px 16px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--panel2); color:var(--text); font-size:13px; width:calc(100% - 32px); }
+  #nav { flex:1; overflow-y:auto; padding:0 10px 20px; }
+  .group-title { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:16px 10px 6px; }
+  .nav-item { padding:8px 12px; border-radius:8px; cursor:pointer; margin-bottom:2px; font-size:13px; color:var(--muted); border:1px solid transparent; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { background:rgba(91,141,255,.15); border-color:var(--accent); color:var(--text); }
+  .nav-item.hidden { display:none; }
+  #main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  #toolbar { padding:14px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--panel); flex-shrink:0; }
+  #toolbar h2 { font-size:16px; margin:0; }
+  #toolbar .actions button { background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; margin-left:8px; }
+  #toolbar .actions button:hover { border-color:var(--accent); color:var(--accent); }
+  #content-wrap { flex:1; overflow-y:auto; padding:30px 40px; }
+  #content { max-width:900px; margin:0 auto; line-height:1.65; font-size:14.5px; }
+  #content h1 { font-size:26px; border-bottom:1px solid var(--border); padding-bottom:10px; }
+  #content h2 { font-size:20px; margin-top:36px; color:var(--accent); }
+  #content h3 { font-size:16px; margin-top:24px; }
+  #content p, #content li { color:#d5dae8; }
+  #content a { color:var(--accent); }
+  #content code { background:var(--code-bg); padding:2px 6px; border-radius:4px; font-size:.9em; color:var(--accent2); }
+  #content pre { background:var(--code-bg); padding:14px 16px; border-radius:8px; overflow-x:auto; border:1px solid var(--border); }
+  #content pre code { background:none; padding:0; color:#d5dae8; }
+  #content table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13px; }
+  #content th, #content td { border:1px solid var(--border); padding:8px 10px; text-align:left; }
+  #content th { background:var(--panel2); }
+  #content blockquote { border-left:3px solid var(--accent); margin:16px 0; padding:4px 16px; background:var(--panel2); color:var(--muted); border-radius:0 8px 8px 0; }
+  .mermaid-block { background:#fff; border-radius:10px; padding:20px; margin:20px 0; overflow-x:auto; }
+  #search-results { padding:0 16px; }
+  .search-hit { font-size:12px; color:var(--muted); padding:6px 0; border-bottom:1px solid var(--border); }
+  .search-hit b { color:var(--accent2); }
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>ZCRM Docs</h1>
+    <div class="sub">nqdev-codebase-analyst · 2026-08-21</div>
+  </div>
+  <input id="search" type="text" placeholder="Search all docs…" oninput="onSearch(this.value)" />
+  <div id="nav"></div>
+</div>
+<div id="main">
+  <div id="toolbar">
+    <h2 id="title">Business Document</h2>
+    <div class="actions">
+      <button onclick="copyContent()">Copy Markdown</button>
+      <button onclick="downloadContent()">Download .md</button>
+    </div>
+  </div>
+  <div id="content-wrap"><div id="content"></div></div>
+</div>
+
+<script type="text/markdown" id="doc-business">
+# Business Documentation: ZCRM
+
+## 1. System Overview
+
+**ZCRM** ("Zalo Sales CRM") is a self-hosted CRM purpose-built for sales teams that work over **Zalo**, Vietnam's dominant consumer messaging platform. Instead of asking sales teams to adopt a new tool, ZCRM connects directly to their existing Zalo accounts (via the unofficial `zca-js` client) and layers CRM structure — contacts, tags, deal stages, appointments, lead scoring, reporting — on top of conversations that already happen in Zalo.
+
+Current release line: **v3.4.x**; `v1.x`–`v3.3.x` are inherited upstream history from `locphamnguyen/ZaloCRM`, which this project relicensed to AGPL-3.0 and continued developing.
+
+**Key features:**
+- Multi-account ("multi-nick") Zalo management with QR login, auto-reconnect, and per-nick daily send caps.
+- Real-time chat (Socket.IO) with attachments, reactions, stickers, bank/QR card rendering, message templates.
+- A two-tier contact model (**Contact** = person, **Friend** = per-nick care record).
+- Lead Scoring engine: 4-axis score, auto-decay, auto-tagging, stuck-lead detection.
+- Appointments with automated reminders and a public token-authenticated action link.
+- A reporting suite (Overview / Nick Fleet / Sales / Pipeline / Engagement / Audit).
+- Bidirectional **Zalo ↔ Telegram bridge** with media re-upload and duplicate-suppression.
+- Per-organization AI assistant (Anthropic / Gemini / OpenAI-compatible, covering Qwen and Kimi).
+- Public REST API (`X-Api-Key`) with a 19-endpoint-group reference and a Postman collection.
+- Grant-based RBAC with department/team scoping, audit logging, OTP-gated privacy mode.
+- PWA scaffolding present but currently **disabled** pending a Vite 8 compatibility fix; mobile support itself is live.
+
+## 2. Technical Architecture
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        SPA["Vue 3 SPA<br/>51 views, Vuetify 4, Pinia"]
+    end
+    subgraph Backend["Backend (Fastify 5, Node 20 ESM)"]
+        APP["app.ts boot sequence"]
+        MOD["25 business modules"]
+        POOL["ZaloAccountPool"]
+    end
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL 16<br/>108 models")]
+        REDIS[("Redis 7")]
+        STORE[("MinIO / S3 / R2")]
+    end
+    SPA -- "REST + Socket.IO" --> APP
+    APP --> MOD
+    MOD --> POOL
+    MOD --> PG
+    MOD --> REDIS
+    MOD --> STORE
+```
+
+- **Backend**: Fastify 5 + Prisma 7 + PostgreSQL 16, Node 20 ESM. **25 business modules** — up from the 23 recorded in the 2026-06-16 architecture doc; `automation` and `lead-pool` moved into the Enterprise (`_ee`) bundle, and `config`, `devices`, `lists`, `push` were added.
+- **Frontend**: Vue 3 + Vuetify 4 + Pinia + Vite. **51 views** — up from the 25 recorded in the same 2026-06-16 doc.
+- **Data layer**: PostgreSQL 16 holds **108 Prisma models** (up from 93), Redis 7 backs BullMQ + rate-limit counters, object storage (MinIO/S3/R2) holds attachments.
+- **Realtime**: Socket.IO, JWT-verified at handshake.
+- **Zalo integration**: `ZaloAccountPool` — in-memory map of live sessions with epoch-tagged reconnect handling, wrapped in per-account/per-category rate limiting.
+- **Open-core seam**: `backend/src/shared/ee-registry/` + `frontend/src/_ee` vs `_ee-stubs`. Neither `_ee` directory exists in this checkout.
+
+## 3. Domain Model
+
+108 models, only 2 enums (String + comment convention).
+
+**The "two-book" model** (`Contact` vs. `Friend`):
+- **`Contact`** = the "cha" (parent) — person-level view. `contacts WHERE merged_into IS NULL` are visible parents. Carries fields *aggregated* from `Friend`: `leadScore` (`MAX()`), nick counters, `priorityScore`.
+- **`Friend`** = the "con" (child) — one row per `(zaloAccountId, zaloUidInNick)`. The *real* 4-axis lead score lives here, plus `friendshipStatus`, `relationshipKind` (legacy `none` value coerced by frontend to `chatting_stranger`), and per-pair message previews.
+- Relationship: **1 Contact → N Friend**. `ContactAccess` layers collaborator sharing; `parentContactId` soft-links across identities (distinct from hard `mergedInto`).
+
+Other clusters: Conversation/Message (ordered by Zalo's BigInt `zaloMsgIdNum`), Telegram bridge state, Lead Scoring config, RBAC, Media Library, and Automation/Marketing/Lead-Pool/Facebook/Zalo-OA tables present in schema but operated on only by the absent `_ee` bundle.
+
+## 4. Actors & Permissions
+
+- **Owner / Admin** — bypass grant checks.
+- **Member** — 18-resource × 5-action grant matrix via `PermissionGroup.grants`.
+- **Department leader/deputy** — dashboard scope layer (`canViewAll`).
+- **Legacy `requireRole`** — still functions, not for new routes.
+- **Public API consumers** — `X-Api-Key`, separate from JWT chain.
+- **Privacy-gated viewers** — OTP-gated unlock for "main nick" content, plus a global warn-only leak guard.
+
+## 5. Business Workflows
+
+- **Connecting a Zalo account**: QR login → `ZaloAccountPool.loginQR()` → session persisted for auto-reconnect. Manual disconnect sets `disconnectReason='manual'`, excluded from all auto-reconnect sweeps.
+- **Inbound/outbound messaging**: zca-js listener → resolve/create Contact/Friend → persist Message → Socket.IO patch scoped to `org:<orgId>` room. 5-minute polling backup exists behind the primary path.
+- **Lead scoring**: signal events feed a 4-axis Friend score; hourly jittered decay + daily stuck-detection/auto-tag; Contact.leadScore recomputed as MAX across Friends.
+- **Appointments**: reminded via two cron sweeps; markable done/cancelled from a public token-authenticated link (no login required).
+- **Zalo group scanning**: BullMQ job, concurrency 1, resumable in 50-member chunks, 3 retries with exponential backoff.
+- **Zalo ↔ Telegram bridge**: subscribes to `bridgeBus` `'message.persisted'`, mirrors per-conversation to a Telegram forum topic, media re-uploaded as bytes, echo-loop suppressed.
+
+## 6. API & Integrations
+
+- **Internal API** (`/api/v1`, JWT) — SPA + mobile app.
+- **Public API** (`X-Api-Key`) — 19 endpoint groups, Postman collection.
+- **Outgoing webhooks**: HMAC-signed, 10s timeout, SSRF-guarded.
+- **AI providers**: Anthropic, Gemini, OpenAI-compatible (covers Qwen/Kimi), per-org config, encrypted keys.
+- **Storage**: MinIO default, or S3/R2 via driver switch.
+- **Telegram bridge**: optional, env-gated.
+- **Other providers**: Google Sheets sync, Zapier webhook (SSRF-guarded).
+
+## 7. Configuration & Deployment
+
+- **Docker Compose**: `app`, `db` (Postgres 16), `redis` (hard BullMQ dependency), `minio` (S3 port public for Zalo CDN fetch, admin console loopback-only), `minio-init` (anonymous download only), `backup` (daily, 7d/4w/3m retention), `clamav` (optional, fail-open).
+- **Required secrets**: `JWT_SECRET`, `ENCRYPTION_KEY` (≥32 chars), `DB_PASSWORD`, `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` — all fail-fast in production if missing/short/default.
+- **Background jobs**: 1 BullMQ queue (`group-scan`) + ~14 cron/interval jobs.
+- **Deploy**: `scripts/zalocrm-deploy.sh`, handles fresh install + upgrade with automatic backup.
+- **No CI/CD**: `.github/workflows/` does not exist.
+
+## 8. Testing Strategy
+
+- **Backend**: 83 `*.test.ts` files, 10-file `tests/security/` suite (auth, tenant-guard, socket-auth, headers). Regression tests exist for real historical vulnerabilities: `custom-report-sqli.test.ts`, `ssrf-guard.test.ts`.
+- **Frontend**: 2 spec files, intentionally thin. Established pattern: extract pure logic into a co-located `*-logic.ts` file (`use-work-scope.ts` / `work-scope-logic.ts` / `work-scope-logic.spec.ts`) and unit-test only that file. No Vuetify mount-testing.
+
+## 9. Appendix
+
+### Glossary
+- **Nick** — a connected Zalo account.
+- **Two-book model** — Contact vs. Friend split.
+- **Ghost nick** — a `ZaloAccount` stuck in a transient state, cleaned up hourly.
+- **Main nick** — `privacyMode='main'`, content blurred unless OTP-unlocked.
+- **EE / CE** — Enterprise (`_ee`, absent) vs. Community (this codebase).
+- **Tenant context** — `AsyncLocalStorage`-carried `{orgId, userId, role}`.
+
+### Open Questions
+- EE bundle internals are unknowable from this checkout — automation/lead-pool/Facebook logic lives in the absent `_ee` bundle.
+- `backend/src/modules/campaign/campaign-routes.ts` appears orphaned — defined but never registered in `app.ts`.
+- Three separate AES-256-GCM implementations exist; only one is actually used. `config.encryptionKey` is defined but never referenced elsewhere in `src/`.
+- The "Friend Invite Queue" referenced by `docker-compose.yml` has no implementation in Community core.
+- Business KPIs and Enterprise pricing are not present in this repo.
+
+### Document Metadata
+Generated 2026-08-21 via `nqdev-codebase-analyst` v2.0.0, full pipeline. Unreviewed — first-pass technical synthesis.
+</script>
+
+<script type="text/markdown" id="doc-prd">
+# Product Requirements Document: ZCRM
+
+> Reverse-engineered PRD from static code analysis — describes what the shipped product *is*, not a forward-looking authored spec. Validate §11–15 against the actual team before using for planning.
+
+## 1. Executive Summary
+
+ZCRM is a self-hosted, open-core CRM for sales teams operating over Zalo. Currently at **v3.4.0** (2026-06-20). 108 domain models, 25 backend modules, 51 frontend views, 83 backend tests — well past MVP maturity. Dual-licensed (AGPL-3.0 Community + commercial Enterprise), with an EE feature set delivered as a separate closed bundle plugging into open hook points.
+
+## 2. Problem Statement
+
+Vietnamese SMB sales teams already run customer conversations through Zalo because that's where customers are. Without CRM structure layered onto Zalo itself, teams lose a shared view of who's talking to which customer across multiple nicks, pipeline tracking, follow-through, and lead-quality/rep-performance visibility.
+
+## 3. Solution Overview
+
+ZCRM connects to existing Zalo accounts via `zca-js`, layering contacts, pipeline, tags, appointments, scoring, and reporting on top — without changing the customer-facing channel. Self-hosted via Docker Compose. Core differentiator: the **two-book domain model** (Contact = person, Friend = per-nick care record), solving "who owns this conversation" once multiple reps touch the same customer.
+
+## 4. Target Audience
+
+- **Primary**: Vietnamese SMB sales/CS teams working over Zalo.
+- **Secondary**: Sales managers/admins needing cross-nick, cross-rep visibility.
+- **Tertiary**: Self-hosting technical operators.
+
+## 5. Core Features
+
+| Feature | User Value | Business Impact |
+|---|---|---|
+| Multi-nick Zalo management | One dashboard for every account | Fleet visibility |
+| Two-book Contact/Friend model | Per-nick notes, merged customer view | Solves ownership ambiguity |
+| Lead Scoring | Know who to follow up | Reduces fall-through |
+| Real-time chat | Full messaging in-CRM | Keeps reps in one tool |
+| Appointments + public link | No-login action | Reduces missed follow-ups |
+| Telegram bridge | Work from Telegram too | Extends reach |
+| Reporting suite | KPI visibility | No SQL access needed |
+| Grant-based RBAC | Fine-grained access | Safe multi-team deployments |
+| Public API + webhooks | External integration | Powers the mobile app |
+| AI assistant | Reply drafting, sentiment | Reduces response time |
+
+## 6. MVP Definition
+
+Per README's "Cốt lõi (v1.0)": multi-Zalo login with auto-reconnect, real-time chat, 5-stage pipeline, appointments with reminders, basic dashboard, Excel export, Owner/Admin/Member roles, public API + webhooks, anti-block rate limiting, basic notifications. Everything v2.0+ is additive post-MVP growth.
+
+## 7. Post-MVP Features (Delivered)
+
+AI Assistant + Automation + Integration Hub (v2.0) → attachments + Friend model (v3.0) → CrmTag + Labels sync (v3.1) → Lead Scoring Phase 6 (v3.2) → media forwarding + R2 (v3.3) → UI/Dashboard redesign + security hardening + group scanning + reporting suite + Telegram bridge + mobile API + AGPL relicense (v3.4, current).
+
+**In-flight**: `zalo-label-mutate` BullMQ queue fully coded but marked `DEFER`, zero callers. Tag Taxonomy v2 dual-writes alongside legacy CrmTag.
+
+## 8. Success Metrics & KPIs
+
+Not tracked in this repository — no product-usage telemetry exists. The in-app reports measure *customer-facing* sales activity, not ZCRM's own adoption/retention.
+
+## 9. User Stories & Acceptance Criteria
+
+- **Sales rep**: work-scope filtering — validated against server-granted `accessibleIds` on every load, never trusting client cache alone.
+- **Manager**: merged customer view — `Contact.leadScore = MAX()` across linked `Friend` rows.
+- **Org owner**: stolen refresh token replay revokes the whole session family, distinguishing genuine reuse from a benign same-tab race via a grace window.
+- **Sales rep**: mark appointment done from a Zalo-shared link without re-login — `/appointments/action` is explicitly public/token-authenticated.
+- **Org admin**: group scans run one at a time per account to avoid Zalo anti-spam detection — worker concurrency is 1 by explicit design.
+
+## 10. Technical Requirements
+
+Node 20 ESM + TypeScript, Fastify 5 / Vue 3+Vuetify 4+Pinia, PostgreSQL 16 via Prisma 7, Redis 7 (BullMQ + rate limits), MinIO/S3/R2 storage, 15-min JWT + rotating refresh, AES-256-GCM at rest, CSP + security headers, SSRF guard on outbound URLs, fail-fast boot secret checks. No formal scaling target — single-process, in-memory `ZaloAccountPool` implies single-instance deployment.
+
+## 11. Constraints & Dependencies
+
+- `zca-js` is unofficial — using it may violate Zalo's ToS, risking account suspension (disclosed in README's legal notice).
+- Single-VPS deployment model, no CI/CD.
+- In-memory Zalo session state — a restart drops live sessions (though saved credentials allow reconnect).
+- EE-only logic for automation execution, lead-pool distribution, Facebook/Zalo-OA import — schema-present but logic-absent in Community.
+- Anti-block heuristics are hand-tuned mitigations, not a contractual SLA.
+
+## 12. Team & Roles
+
+Not derivable from the codebase — no CODEOWNERS, no team roster. Single maintainer contact named for commercial/support inquiries.
+
+## 13. Timeline & Milestones
+
+v2.0 (2026-03-31) → v2.1 (04-16) → v3.0 → v3.1 (04) → v3.2 (05-21) → v3.3.0 (05-25) → v3.3.1–3.3.4 (05-28 to 06-06) → v3.4.0 (06-20, current). Roughly 2-4 week cadence for minor/patch, 1-2 months for feature-major.
+
+## 14. Budget Considerations
+
+Not applicable — open-source with commercial dual-license upsell, not an internally-budgeted initiative.
+
+## 15. Risks & Mitigation Strategies
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Zalo detects automation, suspends accounts | Medium | High | Per-nick caps, staggered sync, concurrency-1 scan, editable `SdkLimit` |
+| Refresh-token theft | Low-medium | High | Rotation + reuse detection + family revocation + audit log |
+| SSRF via webhook URL | Low | Medium | `ssrf-guard.ts` (hostname-literal only — DNS-rebinding TOCTOU is an acknowledged gap) |
+| Cross-tenant data leakage | Low | Critical | ALS tenant context + Prisma guard + staged, not-yet-default RLS |
+| Session loss on crash | Medium | Medium | Persisted session + boot reconnect sweep |
+| Orphaned/dead code accumulating | Ongoing | Low-medium | None automated — flagged as housekeeping |
+
+**Key assumption**: the `_ee` bundle's actual behavior is unverifiable from this checkout; every EE statement above is scoped to the hook contract, not confirmed EE code.
+
+## 16. Glossary
+
+Nick, Two-book model, EE/CE, Tenant context, RLS, Work scope, Ghost nick — see Business-Document.md §9 for full definitions.
+</script>
+
+<script type="text/markdown" id="doc-queue">
+# Queue Flow Diagrams & Architecture
+
+## Overview
+
+ZCRM's async infrastructure runs on **Redis 7 + BullMQ**, a hard dependency (no `profiles:` gate). Despite that, in this Community checkout **only one BullMQ queue is actually wired and running**: `group-scan`. A second is fully coded but deferred, and the "Friend Invite Queue" implied by `docker-compose.yml` has no implementation here — it lives in the absent `_ee/automation` bundle. Alongside BullMQ, ~14 `node-cron`/interval jobs handle the bulk of background work.
+
+See the [diagram viewer](diagram-viewer.html) for the full Mermaid queue-flow diagram.
+
+## Detected Queue Systems
+
+### 1. `group-scan` — Zalo Group Membership Scan Queue
+
+- **Type**: Single-worker sequential job queue (deliberately not parallelized).
+- **Technology**: BullMQ on Redis 7, self-contained connection (not the shared helper, to keep zero import surface toward `_ee`).
+- **Concurrency**: 1 — "1 nick quét tuần tự... chạy song song = burst → Zalo anti-spam."
+- **Job identity**: `gs-${scanId}` — deterministic dedup.
+
+| Setting | Value |
+|---|---|
+| Retry attempts | 3 |
+| Backoff | Exponential, 10s base |
+| Chunk size | 50 members/batch |
+| Resumability | Yes, via `resumeCursor` |
+| removeOnComplete | 24h, keep last 1000 |
+| removeOnFail | 7 days (audit trail, no formal DLQ) |
+
+**Flow**: admin triggers scan → `GroupScan` row created (`queued`) → `enqueueGroupScan(scanId)` → worker picks up (`running`) → chunked member fetch, cursor-resumable → `completed`/`partial`/`failed`. 3 retries with exponential backoff on throw; failed jobs retained 7 days for manual inspection — no automatic DLQ routing or alerting.
+
+### 2. `zalo-label-mutate` — Deferred, Not Wired
+
+File header literally states `STATUS: DEFER 2026-06-01 — CHƯA WIRE VÀO ROUTE`. Zero callers exist. Intended to serialize concurrent Zalo label mutations per account (the SDK's `updateLabels` replaces the whole structure atomically — concurrent calls would race). Not a bug — flag for the team to either wire in or remove.
+
+### 3. "Friend Invite Queue" — Not Present in This Checkout
+
+`docker-compose.yml`'s `FRIEND_INVITE_TEST_MODE` implies a queue that doesn't exist in Community core — only a `Contact.friendInviteSentCount` counter column. Per `app.ts` comments, this lives in the absent `_ee/automation` bundle. **Cannot be verified from this code.**
+
+### Scheduled Jobs (non-queue)
+
+| Job | Schedule |
+|---|---|
+| Friend full-sync | `*/15 * * * *` |
+| Zalo health check | `*/5 * * * *` |
+| Daily session refresh | `0 4 * * *` |
+| Ghost cleanup | `0 * * * *` |
+| Group-info refresh | `0 */6 * * *` |
+| Status-log checkpoint | `*/5 * * * *` |
+| Presence refresh | `*/1 * * * *` |
+| Contact profile enrichment | `0 3 * * *` |
+| Silent-30d detection | `0 19 * * *` |
+| Lead-scoring sweep | `30 2 * * *` |
+| Appointment reminder | `0 1 * * *` |
+| Appointment overdue flip (×2) | `*/5 * * * *` |
+| Engagement classification | `30 19 * * *` |
+| Media trash GC | `30 20 * * *` (dry-run default) |
+| Lead-score decay | hourly + jitter |
+| Stuck-lead detection | daily, configurable hour |
+| Auto-tag sweep | daily |
+
+## Performance & Scaling
+
+No load-test data exists in-repo. The concurrency-1 `group-scan` design is a deliberate throughput ceiling trading safety for speed. Redis `maxmemory 256mb`, `noeviction`, sized for "~35K jobs cumulative, 5K KH/day × 7 days" — re-evaluate before adding more queues.
+
+### Bottlenecks
+- `group-scan` concurrency 1 is global, not per-org.
+- In-memory `ZaloAccountPool` — no horizontal scaling path.
+- Fixed Redis memory ceiling.
+
+## Deployment & Operations
+
+Redis: single instance, AOF persistence (survives `kill -9`), bound to loopback only. No Bull Board or queue-monitoring UI wired up. No queue-depth or lag alerting exists.
+
+## Open Questions & Future Improvements
+
+1. Wire in or remove `zalo-label-mutate`.
+2. Is the Friend Invite Queue ever coming to Community, or permanently Enterprise-only?
+3. No load-testing baseline exists for `group-scan`.
+4. Consider per-org (not global) concurrency limits if multi-tenant contention grows.
+5. No DLQ or retry-exhaustion alerting — a human must notice failures within the 7-day window.
+</script>
+
+<script type="text/markdown" id="spec-tenancy">
+# Technical Spec: Multi-Tenancy & Authentication
+
+## 1. Overview
+Every request operates within an org boundary, enforced by two independent mechanisms: a request-scoped tenant context checked against every org-scoped Prisma query, and a JWT + rotating refresh token layer establishing identity before tenant context is entered.
+
+## 2. Problem Statement
+A single missed `orgId` filter is a cross-tenant data leak. Manual filtering is error-prone at 108-model scale — the system needs a mechanism that fails loud when a query runs without resolved tenant context.
+
+## 3. Proposed Solution
+`AsyncLocalStorage` (`tenant-context.ts`) carries `{orgId, userId, role, bypassTenantGuard}` through the async chain. A Prisma `$allOperations` extension (`tenant-guard.ts`) checks every operation against a 62-model allow-list and warns/throws if no context is present.
+
+## 4. Detailed Design
+- **Auth flow**: `POST /auth/login` (email or Vietnamese phone, bcrypt cost 12) returns a 15-min JWT + opaque refresh token. `auth-middleware.ts` skips per-request DB re-check for the new 15-min token type (worst-case 15-min revocation SLA), enforcing revocation at `/auth/refresh` instead.
+- **Tenant flow**: `withTenant(orgId, fn)` for cron/worker/socket code; `runSystemQuery(fn)` as the sole sanctioned pre-auth escape hatch.
+- **Refresh rotation with reuse detection**: opaque tokens, SHA-256 hash stored only. Revoked-token replay = theft (revokes whole family). Same-token replay within a grace window = benign multi-tab race (reissues, doesn't extend lifetime).
+
+## 5. Technical Architecture
+`shared/tenant/{tenant-context,tenant-guard}.ts`, `org-scoped-models.ts`, `shared/database/prisma-client.ts` (4-layer `$extends` chain), `modules/auth/{auth-middleware,auth-service,refresh-token-service,security-audit}.ts`.
+
+## 6. API Specifications
+`POST /auth/login`, `/auth/refresh`, `/auth/logout`; `Authorization: Bearer <jwt>` on all protected routes, separate from the `X-Api-Key` public surface.
+
+## 7. Database Schema
+`User.jwtTokenVersion`, `RefreshToken` (hashed, `familyId`), `User.role` (legacy dual-read).
+
+## 8. Security Considerations
+Enforcement is staged: Phase 0 (context) → Phase 1a (app-layer guard) → Postgres RLS (intended real boundary, **off by default** via `config.rlsSetConfig`). Current production posture is app-layer defense-in-depth, not yet DB-enforced.
+
+## 9. Performance Requirements
+15-min token skips per-request DB roundtrip — a deliberate latency/security trade-off.
+
+## 10. Testing Strategy
+`tests/security/`: auth-flow, refresh-token-service, tenant-context, tenant-guard, security-audit, require-active-user.
+
+## 11. Deployment & Operations
+Fail-fast boot check: `JWT_SECRET` must be ≥32 chars, non-default, in production.
+
+## 12. Timeline & Dependencies
+Refresh-token rotation shipped as a v3.4.0 headline feature.
+
+## 13. Trade-offs & Rationale
+App-layer guard before RLS is a pragmatic incremental rollout — current posture relies on every query author entering tenant context correctly; RLS would remove that human dependency.
+
+## 14. Approval & Sign-off
+N/A — reverse-engineered spec.
+</script>
+
+<script type="text/markdown" id="spec-zalo">
+# Technical Spec: Zalo Account Pool & Integration
+
+## 1. Overview
+ZCRM's core value depends on maintaining live connections to each org's Zalo accounts via the unofficial `zca-js` client. This subsystem manages connection lifecycle, session persistence, rate limiting, and anti-block heuristics.
+
+## 2. Problem Statement
+`zca-js` wraps an undocumented protocol — no official SDK, no stability guarantee, risk of account suspension if usage looks automated. The system must stay connected across restarts, avoid anti-spam detection, and survive an inherently flaky client.
+
+## 3. Proposed Solution
+A singleton `ZaloAccountPool` holds live SDK sessions tagged with an incrementing epoch to distinguish current from stale connection attempts. Rate limiting is per-`(accountId, category)`, Redis-backed with in-memory fallback, fail-open by design. All scheduled Zalo work is sequential and staggered.
+
+## 4. Detailed Design
+- **Session lifecycle**: `loginQR`/`reconnect`/`disconnect`. Manual disconnect sets `disconnectReason='manual'`, excluded from all auto-reconnect sweeps.
+- **Epoch-based flap prevention**: stale listener events from a superseded connection attempt are ignored via epoch mismatch.
+- **Rate limiting**: fail-open (`checkLimits` catches all errors, returns `allowed:true`). Limits resolved nick-override → org-default → hardcoded fallback, cached 60s, editable via `SdkLimit` table.
+- **Anti-block cadence**: 15-min staggered friend sync, 5-min staggered health checks, concurrency-1 group scan, capped 5-min message polling backup.
+- **Cross-tenant event isolation**: account events scoped to `org:<orgId>` Socket.IO rooms (fixed a prior cross-tenant broadcast bug).
+
+## 5. Technical Architecture
+`zalo-pool.ts` (1,125 lines), `zalo-listener-factory.ts`, `zalo-rate-limiter.ts`, `sdk-limit-service.ts`, `zalo-message-sync.ts`, cron files, `group-scan-{queue,worker}.ts`, `proxy-util.ts`.
+
+## 6. API Specifications
+`/api/v1/zalo-accounts/*` (connect/disconnect/reconnect/proxy/group-scan).
+
+## 7. Database Schema
+`ZaloAccount`, `SdkLimit`, `ZaloAccountStatusLog`, `GroupScan`/`GroupMember`.
+
+## 8. Security Considerations
+Session data is a sensitive credential — encryption-at-rest not directly confirmed in this pass, worth a follow-up. Fail-open rate limiting trades enforcement for availability. Proxy config not SSRF-guarded the way webhooks are (different threat model — likely intentional).
+
+## 9. Performance Requirements
+No formal SLA; optimized for anti-spam avoidance over throughput. Single-process, no horizontal scaling path today.
+
+## 10. Testing Strategy
+`zalo-profile-capture.test.ts` (colocated), plus `group-scan-*`, `friend-sync-*`, `deleted-nick-*`, `ghost-*` tests.
+
+## 11. Deployment & Operations
+Requires `REDIS_URL`. Reconnects all persisted sessions at boot (filtered to real, non-archived UIDs). Gracefully stops group-scan worker on SIGTERM/SIGINT.
+
+## 12. Timeline & Dependencies
+Foundational since v1.0; proxy-per-account added v2.0; `SdkLimit` editability more recent.
+
+## 13. Trade-offs & Rationale
+Fail-open rate limiting: a false negative costs less than a false positive here. In-memory pool with no horizontal scaling is a real constraint, not an oversight — Zalo sessions are inherently stateful per-process.
+
+## 14. Approval & Sign-off
+N/A — reverse-engineered spec.
+</script>
+
+<script type="text/markdown" id="spec-ee">
+# Technical Spec: EE/CE Open-Core Seam
+
+## 1. Overview
+Community (AGPL-3.0, this codebase) and Enterprise (commercial, closed `_ee` bundle) are separated by a deliberate architectural boundary: Community must never import Enterprise code directly.
+
+## 2. Problem Statement
+Open-core code needs to never hard-depend on absent proprietary code, while still exposing well-defined extension points — without inline `if (isEnterprise)` branches scattered through core.
+
+## 3. Proposed Solution
+Backend: 3 hook-table registries (`automation`, `event-bus`, `integrations`) with no-op defaults; `app.ts` dynamically imports `./_ee/index.js` via a runtime string (not statically typecheckable), swallowing the throw if absent. Frontend: Vite `@ee` alias resolves to `_ee/` if present, else `_ee-stubs/` (directory-existence check, no env flag).
+
+## 4. Detailed Design
+- **`AutomationHooks`**: 17 functions, all inert defaults (e.g. `resolveBlockContent` → `{ok:false, error:'AUTOMATION_DISABLED'}`).
+- **`automationEventBus`**: thin EventEmitter wrapper; core modules emit unconditionally, nothing subscribes in Community.
+- **3 extension hook points** in `app.ts`: `registerExtensionEarly`, `registerExtensionRoutes`, `startExtensionJobs`.
+- **Frontend stubs**: empty route/nav arrays + stub Vue components for automation-block/lead-pool UI slots.
+
+## 5. Technical Architecture
+`shared/ee-registry/{automation,event-bus,integrations}.ts`, `app.ts` loader, `vite.config.ts` alias, `frontend/src/_ee-stubs/`.
+
+## 6. API Specifications
+Not a runtime API — a build/boot-time composition mechanism.
+
+## 7. Database Schema
+**Shared across editions**: EE-domain tables (automation, lead-pool, Facebook, Zalo OA) exist in the Community schema even though no Community code operates on them — one shared migration history, deliberate trade-off.
+
+## 8. Security Considerations
+The dynamic-string import is a build-isolation technique, not an access-control boundary — it only prevents an absent `_ee/` from breaking the Community build.
+
+## 9. Performance Requirements
+Every EE hook call executes even when absent, as a cheap no-op — small constant overhead on relevant core paths, not benchmarked.
+
+## 10. Testing Strategy
+No dedicated test pins the "boots cleanly with `_ee/` absent" behavior — implicitly verified by the whole suite passing in this checkout, but no explicit regression test. Flagged as a coverage gap.
+
+## 11. Deployment & Operations
+Directory presence at build time is the entire edition switch — no env var, no runtime flag at the code level.
+
+## 12. Timeline & Dependencies
+Formalized with the v3.4.0 AGPL relicense; `automation`/`lead-pool` moved out of Community core in that release line.
+
+## 13. Trade-offs & Rationale
+Shared schema costs Community unused tables but simplifies migration history. No-op hook tables over inline branches is the right call and consistently followed.
+
+## 14. Approval & Sign-off
+N/A — reverse-engineered spec.
+</script>
+
+<script type="text/markdown" id="spec-contact">
+# Technical Spec: Contact/Friend Two-Book Domain Model
+
+## 1. Overview
+ZCRM's foundational domain decision: split "a customer" into **Contact** (person, manager view) and **Friend** (a specific nick's relationship with that person, rep view).
+
+## 2. Problem Statement
+A customer may relate to a team through more than one Zalo nick. A single-table model forces either losing per-rep context/privacy, or losing the manager's "this is one person" view.
+
+## 3. Proposed Solution
+Keep both as separate, related tables. `Friend` is the unit of per-nick truth (scoring, previews, tags, status) — the day-to-day reality. `Contact` is a derived, person-level aggregate computed *from* linked Friends, not independently maintained.
+
+## 4. Detailed Design
+- **Cardinality**: 1 Contact → N Friend via `Friend.contactId`.
+- **Aggregation direction is Friend → Contact**: `Contact.leadScore = MAX(Friend.leadScore)`; nick counters derived from Friend `friendshipStatus` values; `priorityScore = leadScore×0.55 + engagementScore×0.30 + trendBoost`.
+- **Per-nick privacy isolation**: each Friend carries its own message previews — a rep sharing visibility on a Contact does not see another rep's nick-level preview for the same person.
+- **Visible parent filter**: `contacts WHERE merged_into IS NULL`.
+- **Two distinct grouping mechanisms**: `mergedInto` (hard merge, duplicate resolution) vs `parentContactId` (soft cross-identity link) — do not conflate.
+- **Legacy `relationshipKind: none`**: known junk value, coerced to `chatting_stranger` at the frontend rather than backfilled — an accepted data-quality wart.
+- **`ContactAccess`**: separate junction for primary/collaborator sharing, independent of nick relationship.
+
+## 5. Technical Architecture
+`schema.prisma` (`Contact` L513, `Friend` L1882, `ContactAccess`), `modules/contacts/` (126.2K routes file), `use-{contacts,friends}*.ts` composable families (kept genuinely separate, mirroring the backend split).
+
+## 6. API Specifications
+Separate Contact-level (`/contacts/*`) vs Friend-level route surfaces, consistent with the two-book split.
+
+## 7. Database Schema
+See §4. No changes proposed — this spec documents existing shape and rationale.
+
+## 8. Security Considerations
+Per-Friend preview isolation is itself a privacy control — future features flattening Friend into Contact-level views must preserve it deliberately.
+
+## 9. Performance Requirements
+Recomputation trigger/cadence for `Contact.leadScore` (synchronous vs batch-swept) not directly traced — open question for a future pass.
+
+## 10. Testing Strategy
+No obviously-named test targets the Contact/Friend aggregation invariant specifically — worth confirming coverage exists, or flagging as a gap given this is the domain model's central invariant.
+
+## 11. Deployment & Operations
+Standard Postgres/Prisma migration discipline — no special operational concerns.
+
+## 12. Timeline & Dependencies
+`Friend` introduced in v3.0, replacing an earlier Contact-only design. 4-axis scoring breakdown added in v3.2 ("Phase 6").
+
+## 13. Trade-offs & Rationale
+Two tables cost query complexity but buy privacy isolation and multi-nick correctness a single table can't express. Derived Contact aggregates trade freshness for a single source of truth. Leaving legacy `none` uncleaned avoids backfill risk at the cost of permanent display-layer special-casing.
+
+## 14. Approval & Sign-off
+N/A — reverse-engineered spec.
+</script>
+
+<script type="text/markdown" id="spec-queue">
+# Technical Spec: Async Queue & Background Job System
+
+## 1. Overview
+Two categories of background work: true message queues (BullMQ/Redis) for durable, resumable, concurrency-controlled work, and `node-cron`/interval jobs for periodic sweeps.
+
+## 2. Problem Statement
+Using the wrong tool — cron for durable multi-step work, or a queue for simple sweeps — adds either fragility or unnecessary infrastructure complexity.
+
+## 3. Proposed Solution
+Reserve BullMQ for event-triggered, resumable, individually-retryable work. Everything clock-triggered uses cron/jittered interval. Exactly one queue (`group-scan`) meets the queue bar; a second (`zalo-label-mutate`) is built but deferred; 14 other jobs are cron/interval-based.
+
+## 4. Detailed Design
+- **Why `group-scan` is a queue**: user-triggered, needs resumability (50-member chunks, `resumeCursor`), benefits from retry/backoff, must be concurrency-limited to 1 — none of which cron provides.
+- **Why the crons stay crons**: periodic by nature, individually idempotent, no in-progress state to persist across a crash.
+- **Jitter as thundering-herd prevention**: the scoring decay job alone uses hourly + up to 60s jitter, unlike every fixed-schedule cron elsewhere — scoring was identified as the one job whose load profile justified it.
+- **Self-isolating queue connection**: `group-scan` builds its own `ioredis` connection rather than the shared helper, specifically to keep zero import surface toward `_ee` (enforced by a `check-no-ee-leak.sh` script).
+
+## 5. Technical Architecture
+See `Queue-Flow-Diagrams.md` for the full inventory. `zalo/{group-scan-queue,group-scan-worker}.ts`, `tags/zalo-label-queue.ts` (deferred), `shared/queue/redis-connection.ts` (unused by the live queue).
+
+## 6. API Specifications
+Triggered through domain routes (`POST /zalo-accounts/:id/group-scan`) or purely internally (crons have no HTTP surface).
+
+## 7. Database Schema
+`GroupScan`/`GroupMember` plus each cron's own domain tables — no changes proposed.
+
+## 8. Security Considerations
+None specific beyond operational gaps already noted (no DLQ, no alerting). The self-isolating connection pattern is coupling hygiene, not a security control.
+
+## 9. Performance Requirements
+Not formally specified. Redis sized for ~35K cumulative jobs — check this budget before adding any new queue.
+
+## 10. Testing Strategy
+`group-scan-*.test.ts` covers the one live queue. No test exists for the deferred queue (reasonable, since unwired) — should gain coverage before activation.
+
+## 11. Deployment & Operations
+Redis is a hard Compose dependency (no `profiles:` gate), unlike optional ClamAV — treat as first-class in any deployment runbook.
+
+## 12. Timeline & Dependencies
+BullMQ/Redis adoption and `group-scan` both trace to "Luồng Mục Tiêu M1" (2026-06-01).
+
+## 13. Trade-offs & Rationale
+One queue, many crons is proportionate to the current feature set. No-DLQ retention-based audit trail trades automated handling for operational simplicity — revisit if failure volume grows. Deferring rather than deleting `zalo-label-mutate` keeps a ready solution available at the cost of dead code sitting in the tree.
+
+## 14. Approval & Sign-off
+N/A — reverse-engineered spec.
+</script>
+
+<script type="text/plain" id="mermaid-architecture">
+graph TB
+    subgraph Client["Client Layer"]
+        SPA["Vue 3 SPA<br/>51 views, Vuetify 4, Pinia"]
+    end
+    subgraph Backend["Backend (Fastify 5, Node 20 ESM)"]
+        APP["app.ts boot sequence"]
+        MOD["25 business modules"]
+        POOL["ZaloAccountPool"]
+    end
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL 16<br/>108 models")]
+        REDIS[("Redis 7")]
+        STORE[("MinIO / S3 / R2")]
+    end
+    SPA -- "REST + Socket.IO" --> APP
+    APP --> MOD
+    MOD --> POOL
+    MOD --> PG
+    MOD --> REDIS
+    MOD --> STORE
+</script>
+
+<script>
+marked.use({
+  renderer: {
+    code(code, lang) {
+      if (lang === 'mermaid') {
+        const id = 'mmd-' + Math.random().toString(36).slice(2);
+        return '<div class="mermaid-block" id="' + id + '" data-src="' + encodeURIComponent(code) + '">Rendering diagram…</div>';
+      }
+      const esc = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<pre><code>' + esc + '</code></pre>';
+    }
+  }
+});
+mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+
+const NAV = [
+  { group: 'Documentation', items: [
+    { id: 'business', title: 'Business Document', src: 'doc-business' },
+    { id: 'prd',      title: 'PRD',                src: 'doc-prd' },
+  ]},
+  { group: 'Specifications', items: [
+    { id: 'spec-tenancy', title: 'Multi-Tenancy & Auth',        src: 'spec-tenancy' },
+    { id: 'spec-zalo',    title: 'Zalo Integration',            src: 'spec-zalo' },
+    { id: 'spec-ee',      title: 'EE/CE Open-Core Seam',        src: 'spec-ee' },
+    { id: 'spec-contact', title: 'Contact/Friend Domain Model', src: 'spec-contact' },
+    { id: 'spec-queue',   title: 'Async Queue System',          src: 'spec-queue' },
+  ]},
+  { group: 'Diagrams', items: [
+    { id: 'queue-flow', title: 'Queue Flow & Diagrams', src: 'doc-queue' },
+    { id: 'diagrams-link', title: 'Open Diagram Viewer →', href: 'diagram-viewer.html' },
+  ]},
+];
+
+let current = NAV[0].items[0];
+
+function renderNav(filter) {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  NAV.forEach(g => {
+    const gt = document.createElement('div');
+    gt.className = 'group-title';
+    gt.textContent = g.group;
+    nav.appendChild(gt);
+    g.items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (item.id === current.id ? ' active' : '');
+      el.textContent = item.title;
+      if (filter && !item.title.toLowerCase().includes(filter.toLowerCase()) &&
+          !(document.getElementById(item.src)?.textContent.toLowerCase().includes(filter.toLowerCase()))) {
+        el.classList.add('hidden');
+      }
+      el.onclick = () => {
+        if (item.href) { window.open(item.href, '_blank'); return; }
+        current = item; render();
+      };
+      nav.appendChild(el);
+    });
+  });
+}
+
+async function render() {
+  renderNav(document.getElementById('search').value);
+  document.getElementById('title').textContent = NAV.flatMap(g => g.items).find(i => i.id === current.id)?.title || '';
+  const raw = document.getElementById(current.src).textContent;
+  document.getElementById('content').innerHTML = marked.parse(raw);
+  const blocks = document.querySelectorAll('.mermaid-block');
+  for (const el of blocks) {
+    const src = decodeURIComponent(el.getAttribute('data-src'));
+    try {
+      const { svg } = await mermaid.render('svg-' + Math.random().toString(36).slice(2), src);
+      el.innerHTML = svg;
+    } catch (e) {
+      el.innerHTML = '<pre style="color:#c0392b">Mermaid render error: ' + e.message + '</pre>';
+    }
+  }
+}
+
+function onSearch(v) { renderNav(v); }
+
+function copyContent() {
+  const raw = document.getElementById(current.src).textContent;
+  navigator.clipboard.writeText(raw).then(() => alert('Markdown copied to clipboard.'));
+}
+
+function downloadContent() {
+  const raw = document.getElementById(current.src).textContent;
+  const blob = new Blob([raw], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = current.id + '.md';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
+</content>

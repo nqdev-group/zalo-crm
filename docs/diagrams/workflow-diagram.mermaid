@@ -1,0 +1,24 @@
+graph TD
+    START(["Customer messages a connected Zalo nick"]) --> LISTEN["zca-js listener fires<br/>(zalo-listener-factory.ts)"]
+    LISTEN --> RESOLVE{"Contact/Friend exists<br/>for this UID?"}
+    RESOLVE -- "no" --> CREATE["Create Friend<br/>(+ Contact if new person)"]
+    RESOLVE -- "yes" --> UPDATE["Update Friend preview,<br/>relationshipKind"]
+    CREATE --> MSG["Persist Message + Conversation"]
+    UPDATE --> MSG
+    MSG --> EMIT["Socket.IO emit<br/>scoped to org:&lt;orgId&gt; room"]
+    EMIT --> UI["Frontend use-chat.ts<br/>patches reactive state"]
+    MSG --> SIGNAL["Scoring signal recorded<br/>(inbound message)"]
+    SIGNAL --> SCORE["Friend.leadScore recalculated<br/>4-axis: Engagement/Intent/Fit/Velocity"]
+    SCORE --> AGG["Contact.leadScore = MAX(Friend scores)<br/>on next aggregate pass"]
+    MSG --> BRIDGE{"Telegram bridge<br/>configured for this nick?"}
+    BRIDGE -- "yes" --> MIRROR["Mirror to Telegram topic<br/>(media re-uploaded as bytes)"]
+    BRIDGE -- "no" --> SKIP(["done"])
+    MIRROR --> SKIP
+
+    classDef decision fill:#fcf3cf,stroke:#b7950b
+    classDef action fill:#d6eaf8,stroke:#2980b9
+    classDef terminal fill:#d4edda,stroke:#27ae60
+    class RESOLVE,BRIDGE decision
+    class LISTEN,CREATE,UPDATE,MSG,EMIT,UI,SIGNAL,SCORE,AGG,MIRROR action
+    class START,SKIP terminal
+</content>

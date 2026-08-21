@@ -1,0 +1,38 @@
+graph LR
+    subgraph Producer["Producer"]
+        ROUTE["group-scan-routes.ts<br/>POST /zalo-accounts/:id/group-scan"]
+    end
+
+    subgraph Broker["Redis 7 (BullMQ)"]
+        Q["Queue: group-scan<br/>job id = gs-&lt;scanId&gt; (dedup)"]
+    end
+
+    subgraph Consumer["Worker (concurrency = 1)"]
+        W["group-scan-worker.ts<br/>processGroupScan(scanId)"]
+        STATE["State machine<br/>queued -> running -> completed | partial | failed"]
+        CHUNK["Chunked processing<br/>50 members/batch, resumable via resumeCursor"]
+    end
+
+    subgraph Outcome["Outcome"]
+        OK["removeOnComplete<br/>age 24h, keep last 1000"]
+        FAIL["removeOnFail<br/>retained 7 days for audit<br/>(no formal DLQ)"]
+        RETRY["Retry: attempts=3<br/>backoff exponential, 10s base"]
+    end
+
+    ROUTE -- "enqueueGroupScan(scanId)" --> Q
+    Q -- "BRPOPLPUSH (dedicated ioredis conn)" --> W
+    W --> STATE
+    STATE --> CHUNK
+    CHUNK -- "success" --> OK
+    CHUNK -- "throws" --> RETRY
+    RETRY -- "3rd failure" --> FAIL
+
+    classDef producer fill:#d6eaf8,stroke:#2980b9
+    classDef broker fill:#fcf3cf,stroke:#b7950b
+    classDef consumer fill:#d4edda,stroke:#27ae60
+    classDef outcome fill:#f8d7da,stroke:#c0392b
+    class ROUTE producer
+    class Q broker
+    class W,STATE,CHUNK consumer
+    class OK,FAIL,RETRY outcome
+</content>

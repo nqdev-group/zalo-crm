@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant U as User (browser)
+    participant FE as Vue SPA
+    participant API as Fastify /api/v1
+    participant TC as tenant-context (ALS)
+    participant DB as PostgreSQL (Prisma)
+    participant RT as Socket.IO
+
+    U->>FE: Log in (email/phone + password)
+    FE->>API: POST /auth/login
+    API->>DB: bcrypt compare, resolve orgId
+    API-->>FE: access JWT (15m) + refresh token (rotating)
+    FE->>RT: connect (auth: {token})
+    RT->>RT: verify JWT at handshake, join org:<orgId> room
+
+    Note over FE,API: 15 minutes later - access token expires
+    FE->>API: Any request with expired JWT
+    API-->>FE: 401
+    FE->>API: POST /auth/refresh (single-flight, cross-tab locked)
+    API->>DB: rotate refresh token, detect reuse if any
+    API-->>FE: new access JWT + new refresh token
+    FE->>API: Retry original request (once)
+
+    Note over RT: Socket also disconnects on expiry
+    RT-->>FE: disconnect (reason: io server disconnect)
+    FE->>FE: healAuth() awaits same single-flight refresh
+    FE->>RT: reconnect with fresh token
+    RT-->>FE: onReconnect(downMs) - composable refetches missed data
+
+    API->>TC: enterTenantContext({orgId, userId, role})
+    API->>DB: query via Prisma (tenant-guard checks org-scoped models)
+    DB-->>API: rows
+    API-->>FE: JSON response
+</content>

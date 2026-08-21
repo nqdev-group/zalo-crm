@@ -1,0 +1,43 @@
+graph TB
+    subgraph Client["Client Layer"]
+        SPA["Vue 3 SPA<br/>51 views, Vuetify 4, Pinia"]
+    end
+
+    subgraph Backend["Backend (Fastify 5, Node 20 ESM)"]
+        APP["app.ts boot sequence<br/>plugins -> socket auth -> routes -> cron/queue"]
+        MOD["25 business modules<br/>auth, rbac, zalo, chat, contacts, scoring, ..."]
+        POOL["ZaloAccountPool<br/>in-memory, epoch-tagged reconnect"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL 16<br/>108 Prisma models")]
+        REDIS[("Redis 7<br/>BullMQ + rate-limit counters")]
+        STORE[("MinIO / S3 / R2<br/>attachments + media")]
+    end
+
+    subgraph External["External Systems"]
+        ZALO["Zalo servers<br/>via zca-js (unofficial)"]
+        TG["Telegram Bot API<br/>optional bridge"]
+        AI["AI Providers<br/>Anthropic / Gemini / OpenAI-compat"]
+        WEBHOOK["Org webhooks / Zapier / Google Sheets"]
+    end
+
+    SPA -- "REST /api/v1 (JWT)" --> APP
+    SPA -- "Socket.IO (JWT handshake)" --> APP
+    APP --> MOD
+    MOD --> POOL
+    MOD -- "Prisma ORM, tenant-guarded" --> PG
+    MOD -- "BullMQ + counters" --> REDIS
+    MOD -- "upload/fetch" --> STORE
+    POOL -- "zca-js session" --> ZALO
+    MOD -- "bridgeBus" --> TG
+    MOD -- "per-org provider config" --> AI
+    MOD -- "SSRF-guarded POST" --> WEBHOOK
+
+    classDef external fill:#f8d7da,stroke:#c0392b
+    classDef data fill:#d4edda,stroke:#27ae60
+    classDef backend fill:#d6eaf8,stroke:#2980b9
+    class ZALO,TG,AI,WEBHOOK external
+    class PG,REDIS,STORE data
+    class APP,MOD,POOL backend
+</content>
